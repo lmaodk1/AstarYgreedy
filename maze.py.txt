@@ -1,0 +1,98 @@
+# función heuristica para calcular que tan lejos está un determinado punto
+    # de la meta
+
+    def heuristic(self, state):
+        (r1, c1) = state
+        (r2, c2) = self.goal
+        return abs(r1 - r2) + abs(c1 - c2)
+    
+    
+    # algoritomo greedy
+    def solve_greedy(self):
+        import heapq
+
+        self.num_explored = 0
+        start = Node(state=self.start, parent=None, action=None)
+
+        frontier = []
+        count = 0  # contador para desempate
+
+        heapq.heappush(frontier, (self.heuristic(self.start), count, start))
+
+        self.explored = set()
+
+        while True:
+            if len(frontier) == 0:
+                raise Exception("no solution")
+
+            _, _, node = heapq.heappop(frontier)
+            self.num_explored += 1
+
+            if node.state == self.goal:
+                actions = []
+                cells = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    cells.append(node.state)
+                    node = node.parent
+                actions.reverse()
+                cells.reverse()
+                self.solution = (actions, cells)
+                return
+
+            self.explored.add(node.state)
+
+            for action, state in self.neighbors(node.state):
+                if state not in self.explored:
+                    count += 1
+                    child = Node(state=state, parent=node, action=action)
+                    heapq.heappush(frontier, (self.heuristic(state), count, child))
+
+    
+    
+    # algoritmo a estrella 
+    def solve_astar(self):
+        import heapq
+
+        self.num_explored = 0
+        start = Node(state=self.start, parent=None, action=None)
+
+        frontier = []
+        count = 0  # contador para desempate
+
+        heapq.heappush(frontier, (0, count, start))
+
+        cost_so_far = {self.start: 0}
+        self.explored = set()
+
+        while True:
+            if len(frontier) == 0:
+                raise Exception("no solution")
+
+            _, _, node = heapq.heappop(frontier)
+            self.num_explored += 1
+
+            if node.state == self.goal:
+                actions = []
+                cells = []
+                while node.parent is not None:
+                    actions.append(node.action)
+                    cells.append(node.state)
+                    node = node.parent
+                actions.reverse()
+                cells.reverse()
+                self.solution = (actions, cells)
+                return
+
+            self.explored.add(node.state)
+
+            for action, state in self.neighbors(node.state):
+                new_cost = cost_so_far[node.state] + 1
+
+                if state not in cost_so_far or new_cost < cost_so_far[state]:
+                    cost_so_far[state] = new_cost
+                    priority = new_cost + self.heuristic(state)
+
+                    count += 1
+                    child = Node(state=state, parent=node, action=action)
+                    heapq.heappush(frontier, (priority, count, child))
